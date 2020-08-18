@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobWest.Functional", "RobWest.Functional\RobWest.Functional.csproj", "{26E230A4-9781-4BB7-96EB-B73EE162E853}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobWest.Functional.Playground", "RobWest.Functional.Playground\RobWest.Functional.Playground.csproj", "{9FC5C628-15F4-4201-8AEB-B37FE5C54B15}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{26E230A4-9781-4BB7-96EB-B73EE162E853}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26E230A4-9781-4BB7-96EB-B73EE162E853}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26E230A4-9781-4BB7-96EB-B73EE162E853}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26E230A4-9781-4BB7-96EB-B73EE162E853}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FC5C628-15F4-4201-8AEB-B37FE5C54B15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FC5C628-15F4-4201-8AEB-B37FE5C54B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FC5C628-15F4-4201-8AEB-B37FE5C54B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FC5C628-15F4-4201-8AEB-B37FE5C54B15}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
