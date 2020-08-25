@@ -17,20 +17,11 @@ namespace RobWest.Functional.Playground
 
         private Card(int value, Suit suit)
         {
-            if (!IsValidValue(value))
-            {
-                throw new ArgumentException($"{value.ToString()} is not within the correct range");
-            }
-            
+            if (!IsValidValue(value)) throw new ArgumentException($"{value.ToString()} is invalid");
             (Value, Suit) = (value, suit);
         }
 
         private static Card Default => new Card(14, Suit.Spades);
-
-        internal static bool IsValid(string value)
-        {
-            return new Regex(@"^(10|[2-9,J,Q,K,A]{1})[c,d,h,s]{1}$").IsMatch(value);
-        }
 
         private static bool IsValidValue(int value) => value > 1 && value < 15;
 
