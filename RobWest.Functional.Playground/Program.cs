@@ -9,6 +9,10 @@ namespace RobWest.Functional.Playground
         {
             var option = ("Monday").Parse<DayOfWeek>();
             
+            var o = new Option<int>();
+            
+            
+            
             var result = option.Match(
                 () => "Sorry",
                 (v) => $"Value is {v.ToString()}");
