@@ -1,5 +1,6 @@
 using System;
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using static RobWest.Functional.F;
 
@@ -22,31 +23,38 @@ namespace RobWest.Functional.Playground
 
         public readonly struct CardNumber
         {
+            private int Value { get; }
+            
+            private static readonly IDictionary<int, string> FaceCards = new Dictionary<int, string>
+            {
+                {11, "J"},
+                {12, "Q"},
+                {13, "K"},
+                {14, "A"}
+            };
+
+            private static readonly IDictionary<string, int> FaceCardsReversed =
+                FaceCards.ToDictionary(pair => pair.Value, pair => pair.Key);
+            
             public static readonly Func<string, Option<CardNumber>> Create = s =>
             {
                 if (int.TryParse(s, out var value))
                 {
                     return (value > 1 && value < 15) ? Some(new CardNumber(value)) : None;
                 }
-
-                // We have a face card: J,Q,K,A which we represent with 11,12,13,14
-                return s.ToUpperInvariant() switch
-                {
-                    "J" => Some(new CardNumber(11)),
-                    "Q" => Some(new CardNumber(12)),
-                    "K" => Some(new CardNumber(13)),
-                    "A" => Some(new CardNumber(14)),
-                    _ => None
-                };
+                return FaceCardsReversed.ContainsKey(s) ? Some(new CardNumber(FaceCardsReversed[s])) : None;
             };
-
-            private int Value { get; }
-
+            
             private CardNumber(int value) { Value = value; }
             
             public static implicit operator int(CardNumber c) => c.Value;
             
             public static implicit operator CardNumber(int i) => new CardNumber(i);
+
+            public override string ToString()
+            {
+                return Value < 11 ? Value.ToString() : FaceCards[Value];
+            }
         }
         
         public CardNumber Value { get; }
@@ -63,24 +71,21 @@ namespace RobWest.Functional.Playground
 
         private static readonly Func<CardNumber, SuitType, Card> Create = (value, type) => new Card(value, type);
 
-        private Card(CardNumber value, SuitType suit)
-        {
-            (Value, Suit) = (value, suit);
-        }
+        private Card(CardNumber value, SuitType suit) => (Value, Suit) = (value, suit);
 
         private static readonly Func<string, Validation<(string value, string suit)>> ValidInput = s =>
         {
             if (s.Length < 2 || s.Length > 3) return Invalid($"{s} is not a valid input");
-            return (s[..^1], s[^1].ToString());
+            return (s[..^1].ToUpperInvariant(), s[^1].ToString().ToLowerInvariant());
         };
         
         private static readonly Func<string, Validation<CardNumber>> ValidCardNumber = s
             => CardNumber.Create(s).Match(
-                () => Error($"{s} is not a valid number"),
+                () => Error($"{s} is not a valid card number"),
                 n => Valid(n));
         
         private static readonly Func<string, Validation<SuitType>> ValidSuitType = s 
-            => s.ToLowerInvariant() switch
+            => s switch
             {
                 "c" => Valid(SuitType.Clubs),
                 "d" => Valid(SuitType.Diamonds),
@@ -88,10 +93,40 @@ namespace RobWest.Functional.Playground
                 "s" => Valid(SuitType.Spades),
                 _ => Invalid($"{s} is not a valid suit character")
             };
+
+        public override string ToString() => $"{Value.ToString()}{Suit.ToString()}";
     }
 
     public static class Poker
     {
+        private static readonly IList<Func<IEnumerable<Card>, Validation<string>>> combinations =
+            new List<Func<IEnumerable<Card>, Validation<string>>>
+        {
+            IsRoyalFlush
+        };
+
+        public static string PokerHandRanking(IEnumerable<string> cardInputs)
+        {
+            var cards = cardInputs
+                .Take(5)
+                .Map(Card.CreateValidCard);
+
+
+
+
+            return "Royal Flush";
+        }
+
+        internal static Validation<string> IsRoyalFlush(IEnumerable<Card> cards)
+        {
+            var royalFlush = Enumerable.Range(10, 5);
+            var cardValues = cards.Select(c => (int)c.Value).ToList();
+
+            return cards.GroupBy(c => c.Suit).Count() == 1 && !royalFlush.Except(cardValues).Any() 
+                ? Valid("Royal Flush") 
+                : Invalid();
+        }
+        
         
     }
 }

@@ -15,5 +15,13 @@ namespace RobWest.Functional.Tests
         {
             return Card.CreateValidCard(value).IsValid;
         }
+        
+        [TestCase("10h", "Jh", "Qh", "Ah", "Kh", ExpectedResult="Royal Flush")]
+        [TestCase("3h", "5h", "Qs", "9h", "Ad", ExpectedResult="High Card")]
+        [TestCase("10s", "10c", "8d", "10d", "10h", ExpectedResult="Four of a Kind")]
+        public string PokerHandRanking(params string[] cards)
+        {
+            return Poker.PokerHandRanking(cards);
+        }
     }
 }
