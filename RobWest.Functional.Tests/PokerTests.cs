@@ -21,7 +21,8 @@ namespace RobWest.Functional.Tests
         [TestCase("10s", "10c", "8d", "10d", "10h", ExpectedResult="Four of a Kind")]
         public string PokerHandRanking(params string[] cards)
         {
-            return Poker.PokerHandRanking(cards);
+            var result = Poker.PokerHandRanking(cards);
+            return result;
         }
     }
 }

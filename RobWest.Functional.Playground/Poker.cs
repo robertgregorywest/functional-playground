@@ -99,7 +99,7 @@ namespace RobWest.Functional.Playground
 
     public static class Poker
     {
-        private static readonly IList<Func<IEnumerable<Card>, Validation<string>>> combinations =
+        private static readonly IList<Func<IEnumerable<Card>, Validation<string>>> HandMatchers =
             new List<Func<IEnumerable<Card>, Validation<string>>>
         {
             IsRoyalFlush
@@ -107,17 +107,33 @@ namespace RobWest.Functional.Playground
 
         public static string PokerHandRanking(IEnumerable<string> cardInputs)
         {
-            var cards = cardInputs
+            var response = "No matching hand";
+            var cards = new List<Card>();
+
+            cardInputs
                 .Take(5)
-                .Map(Card.CreateValidCard);
+                .Map(Card.CreateValidCard)
+                .ForEach(v => v.Match(
+                    _ => { },
+                    card => cards.Add(card)
+                ));
 
-
-
-
-            return "Royal Flush";
+            foreach (var handMatcher in HandMatchers)
+            {
+                var match = handMatcher(cards);
+                if (match.IsValid)
+                {
+                    match.Match(
+                        _ => { },
+                        s => response = s);
+                    return response;
+                }
+            }
+ 
+            return response;
         }
 
-        internal static Validation<string> IsRoyalFlush(IEnumerable<Card> cards)
+        private static Validation<string> IsRoyalFlush(IEnumerable<Card> cards)
         {
             var royalFlush = Enumerable.Range(10, 5);
             var cardValues = cards.Select(c => (int)c.Value).ToList();
@@ -126,7 +142,5 @@ namespace RobWest.Functional.Playground
                 ? Valid("Royal Flush") 
                 : Invalid();
         }
-        
-        
     }
 }
