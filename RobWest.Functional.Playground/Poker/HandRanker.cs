@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using static RobWest.Functional.Playground.Poker.Hand;
 using static RobWest.Functional.Playground.Poker.HandMatcherResult;
 
 [assembly: InternalsVisibleTo("Robwest.Functional.Tests")]
@@ -29,41 +30,22 @@ namespace RobWest.Functional.Playground.Poker
 
         public static HandRankerResult HandRanking(IEnumerable<string> cardInputs)
         {
-            var cards = new Hand();
+            return Create(cardInputs).Match(
+                errors => new HandRankerResult(string.Join(", ", errors), -1),
+                RunHandMatchers);
+        }
 
-            // IEnumerable<Validation<Card>> -> Validation<Hand>
-            // Valid if 5 valid cards
-            // Cannot contain duplicates
-
-            cardInputs
-                .Take(5)
-                .Map(Card.CreateValidCard)
-                .ForEach(v => v.Match(
-                    _ => { },
-                    card => cards.Add(card)
-                ));
-
+        private static HandRankerResult RunHandMatchers(Hand hand)
+        {
             var rank = 1;
             foreach (var handMatcher in HandMatchers)
             {
-                var result = handMatcher(cards);
+                var result = handMatcher(hand);
                 if (result.IsMatch) return new HandRankerResult(result.Name, rank);
                 rank++;
             }
-
             return new HandRankerResult(HighCard, 0);
         }
-        
-        public const string RoyalFlush = "Royal Flush";
-        public const string StraightFlush = "Straight Flush";
-        public const string FourOfAKind = "Four of a Kind";
-        public const string FullHouse = "Full House";
-        public const string Flush = "Flush";
-        public const string Straight = "Straight";
-        public const string ThreeOfAKind = "Three of a Kind";
-        public const string TwoPair = "Two Pair";
-        public const string Pair = "Pair";
-        public const string HighCard = "High Card";
 
         private static HandMatcherResult IsRoyalFlush(Hand cards)
         {
