@@ -21,42 +21,41 @@ namespace RobWest.Functional.Playground.Poker
         
         public static Validation<Hand> Create(IEnumerable<string> inputs)
         {
-            var validators = new List<Validator<Hand>> {MustHaveFiveCards, CannotHaveDuplicates};
+            var cardErrors = new List<Error>();
             
-            return HarvestErrors(validators)(inputs
+            var handToValidate = inputs
                 .Map(Card.CreateValidCard)
                 .Bind(v => v.Match(
-                    _ => None,
-                    card => Some(card))) as Hand)
-                .Match(
+                    errors =>
+                    {
+                        cardErrors.AddRange(errors);
+                        return None;
+                    },
+                    card => Some(card)))
+                .Aggregate(new Hand(), (hand, card) =>
+                {
+                    hand.Add(card);
+                    return hand;
+                });
+
+            if (cardErrors.Any()) return Invalid(cardErrors);
+
+            var validators = new List<Validator<Hand>> {MustHaveFiveCards, CannotHaveDuplicates};
+
+            return Validation.HarvestErrors(validators)(handToValidate).Match(
                 errors => Invalid(errors),
-                hand => Valid(hand));
+                Valid);
         }
 
         private Hand()
         {
             // Private to ensure creation runs through validation
         }
-
+        
         private static readonly Validator<Hand> MustHaveFiveCards =
             hand => hand.Count() == 5 ? Valid(hand) : Invalid(FiveCards);
 
         private static readonly Validator<Hand> CannotHaveDuplicates =
             hand => hand.Count() == hand.Distinct().Count() ? Valid(hand) : Invalid(Duplicates);
-
-        private static Validator<T> HarvestErrors<T>(IEnumerable<Validator<T>> validators)
-            => t =>
-            {
-                var errors = validators
-                    .Map(validate => validate(t))
-                    .Bind(v => v.Match(
-                        Invalid: errs => Some(errs),
-                        Valid: _ => None))
-                    .ToList();
-
-                return errors.Count == 0
-                    ? Valid(t)
-                    : Invalid(errors.Flatten());
-            };
     }
 }

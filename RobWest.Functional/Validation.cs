@@ -175,5 +175,20 @@ namespace RobWest.Functional
             Valid: (t) => bind(t).Match(
                Invalid: (err) => Invalid(err),
                Valid: (r) => Valid(project(t, r))));
+      
+      public static Validator<T> HarvestErrors<T>(IEnumerable<Validator<T>> validators)
+         => t =>
+         {
+            var errors = validators
+               .Map(validate => validate(t))
+               .Bind(v => v.Match(
+                  Invalid: errs => Some(errs),
+                  Valid: _ => None))
+               .ToList();
+
+            return errors.Count == 0
+               ? Valid(t)
+               : Invalid(errors.Flatten());
+         };
    }
 }
