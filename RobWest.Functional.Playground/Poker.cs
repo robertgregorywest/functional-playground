@@ -18,13 +18,13 @@ namespace RobWest.Functional.Playground
             Hearts,
             Spades
         }
-        
+
         public SuitType Suit { get; }
 
         public readonly struct CardNumber
         {
             private int Value { get; }
-            
+
             private static readonly IDictionary<int, string> FaceCards = new Dictionary<int, string>
             {
                 {11, "J"},
@@ -35,20 +35,24 @@ namespace RobWest.Functional.Playground
 
             private static readonly IDictionary<string, int> FaceCardsReversed =
                 FaceCards.ToDictionary(pair => pair.Value, pair => pair.Key);
-            
+
             public static readonly Func<string, Option<CardNumber>> Create = s =>
             {
                 if (int.TryParse(s, out var value))
                 {
                     return (value > 1 && value < 15) ? Some(new CardNumber(value)) : None;
                 }
+
                 return FaceCardsReversed.ContainsKey(s) ? Some(new CardNumber(FaceCardsReversed[s])) : None;
             };
-            
-            private CardNumber(int value) { Value = value; }
-            
+
+            private CardNumber(int value)
+            {
+                Value = value;
+            }
+
             public static implicit operator int(CardNumber c) => c.Value;
-            
+
             public static implicit operator CardNumber(int i) => new CardNumber(i);
 
             public override string ToString()
@@ -56,7 +60,7 @@ namespace RobWest.Functional.Playground
                 return Value < 11 ? Value.ToString() : FaceCards[Value];
             }
         }
-        
+
         public CardNumber Value { get; }
 
         public static Validation<Card> CreateValidCard(string s) =>
@@ -78,13 +82,13 @@ namespace RobWest.Functional.Playground
             if (s.Length < 2 || s.Length > 3) return Invalid($"{s} is not a valid input");
             return (s[..^1].ToUpperInvariant(), s[^1].ToString().ToLowerInvariant());
         };
-        
+
         private static readonly Func<string, Validation<CardNumber>> ValidCardNumber = s
             => CardNumber.Create(s).Match(
                 () => Error($"{s} is not a valid card number"),
                 n => Valid(n));
-        
-        private static readonly Func<string, Validation<SuitType>> ValidSuitType = s 
+
+        private static readonly Func<string, Validation<SuitType>> ValidSuitType = s
             => s switch
             {
                 "c" => Valid(SuitType.Clubs),
@@ -99,16 +103,34 @@ namespace RobWest.Functional.Playground
 
     public static class Poker
     {
-        private static readonly IList<Func<IEnumerable<Card>, Validation<string>>> HandMatchers =
-            new List<Func<IEnumerable<Card>, Validation<string>>>
+        public readonly struct HandResult
         {
-            IsRoyalFlush
-        };
+            public bool IsMatch { get; }
+            public string Name { get; }
+            public int Rank { get; }
+
+            private HandResult(bool isMatch, string name, int rank) => (IsMatch, Name, Rank) = (isMatch, name, rank);
+
+            public static HandResult Match(string name, int rank) => new HandResult(true, name, rank);
+
+            public static HandResult NoMatch(string name) => new HandResult(false, name, 0);
+        }
+
+        private static readonly IList<Func<IList<Card>, HandResult>> HandMatchers =
+            new List<Func<IList<Card>, HandResult>>
+            {
+                IsRoyalFlush,
+                IsStraightFlush,
+                IsFourOfAKind,
+                IsHighCard
+            };
 
         public static string PokerHandRanking(IEnumerable<string> cardInputs)
         {
-            var response = "No matching hand";
             var cards = new List<Card>();
+
+            // IEnumerable<Validation<Card>> -> Validation<IEnumerable<Card>>
+            // Valid if 5 valid cards
 
             cardInputs
                 .Take(5)
@@ -120,27 +142,62 @@ namespace RobWest.Functional.Playground
 
             foreach (var handMatcher in HandMatchers)
             {
-                var match = handMatcher(cards);
-                if (match.IsValid)
-                {
-                    match.Match(
-                        _ => { },
-                        s => response = s);
-                    return response;
-                }
+                var result = handMatcher(cards);
+                if (result.IsMatch) return result.Name;
             }
- 
-            return response;
+
+            return "No matching hand";
         }
 
-        private static Validation<string> IsRoyalFlush(IEnumerable<Card> cards)
+        private static IEnumerable<int> CardValues(this IEnumerable<Card> cards)
+            => cards.Select(c => (int) c.Value);
+
+        private static int SuitCount(this IEnumerable<Card> cards)
+            => cards.GroupBy(c => c.Suit).Count();
+        
+        private static bool AreConsecutive(this IEnumerable<Card> cards)
+            => !cards.CardValues().Select((i,j) => i-j).Distinct().Skip(1).Any();
+
+        // Royal Flush: A, K, Q, J, 10, all with the same suit.
+        // Straight Flush: Five cards in sequence, all with the same suit.
+        // Four of a Kind: Four cards of the same rank.
+        // Full House: Three of a Kind with a Pair.
+        // Flush: Any five cards of the same suit, not in sequence.
+        // Straight: Five cards in a sequence, but not of the same suit.
+        // Three of a Kind: Three cards of the same rank.
+        // Two Pair: Two different Pair.
+        // Pair: Two cards of the same rank.
+        // High Card: No other valid combination.
+
+        public const string RoyalFlush = "Royal Flush";
+        public const string StraightFlush = "Straight Flush";
+        public const string FourOfAKind = "Four of a Kind";
+
+
+        public const string HighCard = "High Card";
+
+        private static HandResult IsRoyalFlush(IList<Card> cards)
         {
-            var royalFlush = Enumerable.Range(10, 5);
-            var cardValues = cards.Select(c => (int)c.Value).ToList();
+            var royalFlush = new[] {10, 11, 12, 13, 14};
 
-            return cards.GroupBy(c => c.Suit).Count() == 1 && !royalFlush.Except(cardValues).Any() 
-                ? Valid("Royal Flush") 
-                : Invalid();
+            return cards.SuitCount() == 1 && cards.CardValues().MatchExactly(royalFlush)
+                ? HandResult.Match(RoyalFlush, 1)
+                : HandResult.NoMatch(RoyalFlush);
         }
+
+        private static HandResult IsStraightFlush(IList<Card> cards)
+        {
+            return cards.SuitCount() == 1 && cards.AreConsecutive()
+                ? HandResult.Match(StraightFlush, 2)
+                : HandResult.NoMatch(StraightFlush);
+        }
+
+        private static HandResult IsFourOfAKind(IList<Card> cards)
+        {
+            var cardValues = cards.CardValues().GroupBy(v => v).Count();
+            return cardValues <= 2 ? HandResult.Match(FourOfAKind, 3) : HandResult.NoMatch(FourOfAKind);
+        }
+
+        private static HandResult IsHighCard(IList<Card> cards) => HandResult.Match(HighCard, 100);
     }
 }
