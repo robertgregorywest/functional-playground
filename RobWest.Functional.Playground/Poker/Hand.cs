@@ -21,31 +21,22 @@ namespace RobWest.Functional.Playground.Poker
         
         public static Validation<Hand> Create(IEnumerable<string> inputs)
         {
-            var hand = new Hand();
-            var cardErrors = new List<Error>();
-
-            inputs
-                .Map(Card.CreateValidCard)
-                .ForEach(v => v.Match(
-                    errors => cardErrors.AddRange(errors),
-                    card => hand.Add(card)
-                ));
-
-            if (cardErrors.Any()) return Invalid(cardErrors);
-
             var validators = new List<Validator<Hand>> {MustHaveFiveCards, CannotHaveDuplicates};
-
-            return HarvestErrors(validators)(hand).Match(
+            
+            return HarvestErrors(validators)(inputs
+                .Map(Card.CreateValidCard)
+                .Bind(v => v.Match(
+                    _ => None,
+                    card => Some(card))) as Hand)
+                .Match(
                 errors => Invalid(errors),
-                Valid);
+                hand => Valid(hand));
         }
 
         private Hand()
         {
             // Private to ensure creation runs through validation
         }
-        
-        private delegate Validation<T> Validator<T>(T t);
 
         private static readonly Validator<Hand> MustHaveFiveCards =
             hand => hand.Count() == 5 ? Valid(hand) : Invalid(FiveCards);

@@ -17,6 +17,8 @@ namespace RobWest.Functional
       public static Validation.Invalid Invalid(IEnumerable<Error> errors) => new Validation.Invalid(errors);
       public static Validation<R> Invalid<R>(IEnumerable<Error> errors) => new Validation.Invalid(errors);
    }
+   
+   public delegate Validation<T> Validator<T>(T t);
 
    public struct Validation<T>
    {
