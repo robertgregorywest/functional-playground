@@ -1,6 +1,7 @@
+using System;
 using NUnit.Framework;
 using RobWest.Functional.Playground.Poker;
-using static RobWest.Functional.Playground.Poker.PokerHandRanker;
+using static RobWest.Functional.Playground.Poker.HandRanker;
 
 namespace RobWest.Functional.Tests
 {
@@ -30,14 +31,19 @@ namespace RobWest.Functional.Tests
         // Pair: Two cards of the same rank.
         // High Card: No other valid combination.
         
-        [TestCase("10h", "Jh", "Qh", "Ah", "Kh", ExpectedResult=RoyalFlush)]
-        [TestCase("2h", "3h", "4h", "5h", "6h", ExpectedResult=StraightFlush)]
-        [TestCase("3h", "5h", "Qs", "9h", "Ad", ExpectedResult=HighCard)]
-        [TestCase("10s", "10c", "8d", "10d", "10h", ExpectedResult=FourOfAKind)]
+        [TestCase("10h", "Jh", "Qh", "Ah", "Kh", ExpectedResult=RoyalFlush+"1")]
+        [TestCase("2h", "3h", "4h", "5h", "6h", ExpectedResult=StraightFlush+"2")]
+        [TestCase("10s", "10c", "8d", "10d", "10h", ExpectedResult=FourOfAKind+"3")]
+        [TestCase("10s", "10c", "8d", "10d", "8h", ExpectedResult=FullHouse+"4")]
+        [TestCase("10s", "2s", "8s", "6s", "8s", ExpectedResult=Flush+"5")]
+        [TestCase("2s", "3h", "4d", "6s", "5c", ExpectedResult=Straight+"6")]
+        [TestCase("10s", "10c", "8d", "10d", "Jc", ExpectedResult=ThreeOfAKind+"7")]
+        [TestCase("10s", "10c", "8d", "8c", "Jc", ExpectedResult=TwoPair+"8")]
+        [TestCase("10s", "10c", "8d", "Qh", "Jc", ExpectedResult=Pair+"9")]
+        [TestCase("3h", "5h", "Qs", "9h", "Ad", ExpectedResult=HighCard+"0")]
         public string HandRankingTest(params string[] cards)
         {
-            var result = HandRanking(cards);
-            return result;
+            return HandRanking(cards).ToString();
         }
     }
 }
