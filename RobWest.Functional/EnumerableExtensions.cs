@@ -133,5 +133,12 @@ namespace RobWest.Functional
 
         public static bool MatchExactly<T>(this IEnumerable<T> @this, IEnumerable<T> other)
             => !@this.Except(other).Any();
+        
+        public static IEnumerable<T> Adjust<T>(this IEnumerable<T> @this, Func<T, int, bool> shouldReplace,
+            T replacement) =>
+            @this.Select((obj, pos) => shouldReplace(obj, pos) ? replacement : obj);
+        // var arrA = new[] {'a', 'b', 'c', 'd'};
+        // var arrB = arrA.Adjust((x, i) => i == 2, 'z');
+        // var arrC = arrA.Adjust((x, i) => x == 'c', 'z');
     }
 }

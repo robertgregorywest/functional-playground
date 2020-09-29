@@ -101,6 +101,9 @@ namespace RobWest.Functional
       {
          for (var i = from; i <= to; i++) yield return i;
       }
+
+      public static R DoIfNotNull<T, R>(this T @this, Func<T, R> f) =>
+         !EqualityComparer<T>.Default.Equals(@this, default) ? f(@this) : default;
    }
 }
 
